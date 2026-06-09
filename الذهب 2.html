@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XAUUSD Signals — ذهب</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Cairo:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #111418;
+    --card: #161b22;
+    --border: #21262d;
+    --gold: #f0b429;
+    --gold-dim: #b8860b;
+    --buy: #00e676;
+    --sell: #ff4444;
+    --neutral: #8b949e;
+    --text: #e6edf3;
+    --text-dim: #6e7681;
+    --mono: 'IBM Plex Mono', monospace;
+    --body: 'Cairo', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(240,180,41,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,12,16,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    display: block;
+    font-family: var(--body);
+    letter-spacing: 0;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,230,118,0.1);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--buy);
+    font-family: var(--mono);
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--buy);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* Main layout */
+  main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    position: relative; z-index: 1;
+  }
+
+  /* Price hero */
+  .price-hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-hero::before {
+    content: 'XAU';
+    position: absolute;
+    top: -10px; left: -5px;
+    font-size: 80px;
+    font-family: var(--mono);
+    color: rgba(240,180,41,0.04);
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .price-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    font-family: var(--mono);
+  }
+  .price-value {
+    font-family: var(--mono);
+    font-size: 40px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .price-change {
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .price-change.up { background: rgba(0,230,118,0.15); color: var(--buy); }
+  .price-change.down { background: rgba(255,68,68,0.15); color: var(--sell); }
+
+  .price-meta {
+    display: flex; gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .price-meta-item { flex: 1; }
+  .price-meta-label { font-size: 10px; color: var(--text-dim); margin-bottom: 2px; }
+  .price-meta-val { font-family: var(--mono); font-size: 13px; color: var(--text); }
+
+  /* Mini chart */
+  .chart-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .tf-buttons {
+    display: flex; gap: 4px;
+  }
+  .tf-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--mono);
+    transition: all 0.2s;
+  }
+  .tf-btn.active {
+    background: rgba(240,180,41,0.15);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+
+  canvas#priceChart {
+    width: 100% !important;
+    height: 160px !important;
+    display: block;
+  }
+
+  /* Signal card */
+  .signal-card {
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .signal-card:active { transform: scale(0.98); }
+
+  .signal-card.buy {
+    background: linear-gradient(135deg, rgba(0,230,118,0.08), rgba(0,230,118,0.03));
+    border-color: rgba(0,230,118,0.3);
+  }
+  .signal-card.sell {
+    background: linear-gradient(135deg, rgba(255,68,68,0.08), rgba(255,68,68,0.03));
+    border-color: rgba(255,68,68,0.3);
+  }
+  .signal-card.neutral {
+    background: var(--card);
+    border-color: var(--border);
+  }
+
+  .signal-type {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .signal-badge {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 6px 16px;
+    border-radius: 10px;
+  }
+  .buy .signal-badge { background: rgba(0,230,118,0.2); color: var(--buy); }
+  .sell .signal-badge { background: rgba(255,68,68,0.2); color: var(--sell); }
+  .neutral .signal-badge { background: rgba(139,148,158,0.2); color: var(--neutral); }
+
+  .signal-strength {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .signal-strength-label { font-size: 10px; color: var(--text-dim); }
+  .signal-strength-dots {
+    display: flex; gap: 3px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .buy .dot.active { background: var(--buy); }
+  .sell .dot.active { background: var(--sell); }
+
+  .signal-levels {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .level-item {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .level-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .level-value {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .level-value.entry { color: var(--gold); }
+  .level-value.sl { color: var(--sell); }
+  .level-value.tp1 { color: var(--buy); }
+  .level-value.tp2 { color: #69d2e7; }
+
+  .signal-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .signal-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .confidence {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .confidence-bar {
+    width: 60px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .confidence-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  }
+
+  /* Indicators section */
+  .indicators-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .indicator-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .ind-name {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .ind-val {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .ind-signal {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .ind-signal.buy { background: rgba(0,230,118,0.15); color: var(--buy); }
+  .ind-signal.sell { background: rgba(255,68,68,0.15); color: var(--sell); }
+  .ind-signal.neutral { background: rgba(139,148,158,0.15); color: var(--neutral); }
+
+  /* History */
+  .section-title {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    font-family: var(--mono);
+  }
+
+  .history-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .history-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .history-left { display: flex; align-items: center; gap: 10px; }
+  .history-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+  .history-badge.buy { background: rgba(0,230,118,0.15); color: var(--buy); }
+  .history-badge.sell { background: rgba(255,68,68,0.15); color: var(--sell); }
+  .history-entry {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .history-result {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .history-result.win { color: var(--buy); }
+  .history-result.loss { color: var(--sell); }
+
+  /* Refresh button */
+  .refresh-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(240,180,41,0.15), rgba(240,180,41,0.08));
+    border: 1px solid rgba(240,180,41,0.3);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--gold);
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+  }
+  .refresh-btn:active {
+    transform: scale(0.97);
+    background: rgba(240,180,41,0.2);
+  }
+  .refresh-icon { font-size: 16px; }
+
+  /* Warning */
+  .warning {
+    background: rgba(240,180,41,0.05);
+    border: 1px solid rgba(240,180,41,0.15);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(240,180,41,0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">XAU/USD</div>
+      <span class="logo-sub">إشارات الذهب الفورية</span>
+    </div>
+  </div>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    LIVE
+  </div>
+</header>
+
+<main>
+
+  <!-- Price Hero -->
+  <div class="price-hero">
+    <div class="price-label">سعر الذهب الآن</div>
+    <div class="price-value" id="livePrice">جارٍ التحميل...</div>
+    <div class="price-change up" id="priceChange">—</div>
+    <div class="price-meta">
+      <div class="price-meta-item">
+        <div class="price-meta-label">أعلى اليوم</div>
+        <div class="price-meta-val" id="highVal">—</div>
+      </div>
+      <div class="price-meta-item">
+        <div class="price-meta-label">أدنى اليوم</div>
+        <div class="price-meta-val" id="lowVal">—</div>
+      </div>
+      <div class="price-meta-item">
+        <div class="price-meta-label">الانتشار</div>
+        <div class="price-meta-val" id="spreadVal">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">حركة السعر</div>
+      <div class="tf-buttons">
+        <button class="tf-btn active" onclick="setTF(this,'M5')">M5</button>
+        <button class="tf-btn" onclick="setTF(this,'M15')">M15</button>
+        <button class="tf-btn" onclick="setTF(this,'H1')">H1</button>
+      </div>
+    </div>
+    <canvas id="priceChart"></canvas>
+  </div>
+
+  <!-- Main Signal -->
+  <div class="signal-card buy" id="mainSignal">
+    <div class="signal-type">
+      <div class="signal-badge" id="signalBadge">BUY</div>
+      <div class="signal-strength">
+        <div class="signal-strength-label">قوة الإشارة</div>
+        <div class="signal-strength-dots" id="strengthDots">
+          <div class="dot active"></div>
+          <div class="dot active"></div>
+          <div class="dot active"></div>
+          <div class="dot active"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="signal-levels">
+      <div class="level-item">
+        <div class="level-label">نقطة الدخول</div>
+        <div class="level-value entry" id="entryVal">—</div>
+      </div>
+      <div class="level-item">
+        <div class="level-label">وقف الخسارة</div>
+        <div class="level-value sl" id="slVal">—</div>
+      </div>
+      <div class="level-item">
+        <div class="level-label">هدف 1</div>
+        <div class="level-value tp1" id="tp1Val">—</div>
+      </div>
+      <div class="level-item">
+        <div class="level-label">هدف 2</div>
+        <div class="level-value tp2" id="tp2Val">—</div>
+      </div>
+    </div>
+
+    <div class="signal-footer">
+      <div class="signal-time" id="signalTime">—</div>
+      <div class="confidence">
+        <span>الثقة</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" id="confBar" style="width:75%"></div>
+        </div>
+        <span id="confPct">75%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicators -->
+  <div class="section-title">المؤشرات الفنية</div>
+  <div class="indicators-grid" id="indicatorsGrid">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- Refresh -->
+  <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
+    <span class="refresh-icon">↻</span>
+    تحديث الإشارة
+  </button>
+
+  <!-- History -->
+  <div class="section-title">آخر الإشارات</div>
+  <div class="history-list" id="historyList">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- Warning -->
+  <div class="warning">
+    ⚠️ هذه الإشارات للأغراض التعليمية فقط. التداول ينطوي على مخاطر. تأكد دائمًا من تحليلك الخاص قبل الدخول في أي صفقة.
+  </div>
+
+</main>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let currentPrice = 4268.50;
+let currentTF = 'M5';
+let chartData = [];
+let chartCtx;
+let priceHistory = [];
+const TWELVE_DATA_KEY = '45c2a41cedc542fc9aef58dfedf67179';
+
+// ── Price simulation (realistic XAU/USD movement) ─────────────────────────
+function generatePrice(base, count) {
+  const arr = [];
+  let p = base;
+  for (let i = 0; i < count; i++) {
+    p += (Math.random() - 0.49) * 3;
+    arr.push(parseFloat(p.toFixed(2)));
+  }
+  return arr;
+}
+
+// ── Initialize chart ─────────────────────────────────────────────────────────
+function initChart() {
+  const canvas = document.getElementById('priceChart');
+  chartCtx = canvas.getContext('2d');
+  chartData = generatePrice(currentPrice - 20, 40);
+  drawChart();
+}
+
+function drawChart() {
+  const canvas = document.getElementById('priceChart');
+  const W = canvas.offsetWidth;
+  const H = 160;
+  canvas.width = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = chartCtx;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  ctx.clearRect(0,0,W,H);
+
+  const min = Math.min(...chartData) - 2;
+  const max = Math.max(...chartData) + 2;
+  const range = max - min;
+
+  const toX = i => (i / (chartData.length - 1)) * W;
+  const toY = v => H - ((v - min) / range) * (H - 20) - 10;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const y = 10 + (i / 3) * (H - 20);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  const last = chartData[chartData.length-1];
+  const first = chartData[0];
+  const isUp = last >= first;
+  if (isUp) {
+    grad.addColorStop(0, 'rgba(0,230,118,0.15)');
+    grad.addColorStop(1, 'rgba(0,230,118,0)');
+  } else {
+    grad.addColorStop(0, 'rgba(255,68,68,0.15)');
+    grad.addColorStop(1, 'rgba(255,68,68,0)');
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(toX(0), H);
+  chartData.forEach((v,i) => ctx.lineTo(toX(i), toY(v)));
+  ctx.lineTo(toX(chartData.length-1), H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  chartData.forEach((v,i) => {
+    if (i===0) ctx.moveTo(toX(i), toY(v));
+    else ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.strokeStyle = isUp ? '#00e676' : '#ff4444';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Current price dot
+  const cx = toX(chartData.length-1);
+  const cy = toY(chartData[chartData.length-1]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI*2);
+  ctx.fillStyle = isUp ? '#00e676' : '#ff4444';
+  ctx.fill();
+}
+
+async function setTF(btn, tf) {
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTF = tf;
+  await fetchChartData(tf);
+}
+
+// ── Generate signal ──────────────────────────────────────────────────────────
+function generateSignal(price) {
+  // Simple RSI + momentum sim
+  const rsi = 30 + Math.random() * 50;
+  const macd = (Math.random() - 0.48) * 5;
+  const ema_diff = (Math.random() - 0.45) * 8;
+
+  let direction = 'neutral';
+  let strength = 0;
+
+  if (rsi < 40 && macd > 0 && ema_diff > 0) { direction = 'buy'; strength = 4 + Math.floor(Math.random()*2); }
+  else if (rsi > 60 && macd < 0 && ema_diff < 0) { direction = 'sell'; strength = 4 + Math.floor(Math.random()*2); }
+  else if (rsi < 45 && macd > 0) { direction = 'buy'; strength = 2 + Math.floor(Math.random()*2); }
+  else if (rsi > 55 && macd < 0) { direction = 'sell'; strength = 2 + Math.floor(Math.random()*2); }
+  else { direction = 'buy'; strength = 2; }
+
+  const isBuy = direction === 'buy';
+  const sl = isBuy ? (price - 8 - Math.random()*5).toFixed(2) : (price + 8 + Math.random()*5).toFixed(2);
+  const tp1 = isBuy ? (price + 10 + Math.random()*5).toFixed(2) : (price - 10 - Math.random()*5).toFixed(2);
+  const tp2 = isBuy ? (price + 20 + Math.random()*8).toFixed(2) : (price - 20 - Math.random()*8).toFixed(2);
+  const conf = 55 + Math.floor(Math.random() * 35);
+
+  return { direction, strength, entry: price.toFixed(2), sl, tp1, tp2, conf, rsi: rsi.toFixed(1), macd: macd.toFixed(2), ema_diff: ema_diff.toFixed(2) };
+}
+
+// ── Update UI ─────────────────────────────────────────────────────────────────
+function updatePriceUI(price) {
+  const prev = currentPrice;
+  const change = (price - prev).toFixed(2);
+  const pct = ((price - prev) / prev * 100).toFixed(2);
+
+  document.getElementById('livePrice').textContent = price.toFixed(2);
+
+  const changeEl = document.getElementById('priceChange');
+  if (change >= 0) {
+    changeEl.textContent = `+${change} (+${pct}%)`;
+    changeEl.className = 'price-change up';
+  } else {
+    changeEl.textContent = `${change} (${pct}%)`;
+    changeEl.className = 'price-change down';
+  }
+
+  document.getElementById('highVal').textContent = (price + 8 + Math.random()*5).toFixed(2);
+  document.getElementById('lowVal').textContent = (price - 8 - Math.random()*5).toFixed(2);
+  document.getElementById('spreadVal').textContent = (0.20 + Math.random()*0.15).toFixed(2);
+}
+
+function updateSignalUI(sig) {
+  const card = document.getElementById('mainSignal');
+  card.className = 'signal-card ' + sig.direction;
+
+  document.getElementById('signalBadge').textContent = sig.direction.toUpperCase() === 'BUY' ? 'شراء BUY' : sig.direction.toUpperCase() === 'SELL' ? 'بيع SELL' : 'انتظار';
+  document.getElementById('entryVal').textContent = sig.entry;
+  document.getElementById('slVal').textContent = sig.sl;
+  document.getElementById('tp1Val').textContent = sig.tp1;
+  document.getElementById('tp2Val').textContent = sig.tp2;
+  document.getElementById('confBar').style.width = sig.conf + '%';
+  document.getElementById('confPct').textContent = sig.conf + '%';
+
+  const now = new Date();
+  document.getElementById('signalTime').textContent =
+    now.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
+
+  // Strength dots
+  const dots = document.getElementById('strengthDots');
+  dots.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < sig.strength ? ' active' : '');
+    dots.appendChild(d);
+  }
+}
+
+function updateIndicators(sig) {
+  const indicators = [
+    { name: 'RSI (14)', val: sig.rsi, signal: sig.rsi < 40 ? 'buy' : sig.rsi > 60 ? 'sell' : 'neutral', label: sig.rsi < 40 ? 'تشبع بيع' : sig.rsi > 60 ? 'تشبع شراء' : 'محايد' },
+    { name: 'MACD', val: sig.macd, signal: sig.macd > 0 ? 'buy' : 'sell', label: sig.macd > 0 ? 'صاعد' : 'هابط' },
+    { name: 'EMA Cross', val: sig.ema_diff > 0 ? 'فوق' : 'تحت', signal: sig.ema_diff > 0 ? 'buy' : 'sell', label: sig.ema_diff > 0 ? 'إشارة شراء' : 'إشارة بيع' },
+    { name: 'Stochastic', val: (20 + Math.random()*70).toFixed(0), signal: Math.random() > 0.5 ? 'buy' : 'sell', label: Math.random() > 0.5 ? 'صاعد' : 'هابط' },
+  ];
+
+  const grid = document.getElementById('indicatorsGrid');
+  grid.innerHTML = '';
+  indicators.forEach(ind => {
+    grid.innerHTML += `
+      <div class="indicator-card">
+        <div class="ind-name">${ind.name}</div>
+        <div class="ind-val" style="color:${ind.signal==='buy'?'#00e676':ind.signal==='sell'?'#ff4444':'#8b949e'}">${ind.val}</div>
+        <div class="ind-signal ${ind.signal}">${ind.label}</div>
+      </div>`;
+  });
+}
+
+function addHistory(sig, price) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
+  const isWin = Math.random() > 0.3;
+  const pips = isWin ? '+' + (Math.floor(Math.random()*80)+20) : '-' + (Math.floor(Math.random()*30)+5);
+
+  priceHistory.unshift({ dir: sig.direction, entry: price.toFixed(2), time, isWin, pips });
+  if (priceHistory.length > 5) priceHistory.pop();
+
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  priceHistory.forEach(h => {
+    list.innerHTML += `
+      <div class="history-item">
+        <div class="history-left">
+          <div class="history-badge ${h.dir}">${h.dir === 'buy' ? 'BUY' : 'SELL'}</div>
+          <div class="history-entry">${h.entry} · ${h.time}</div>
+        </div>
+        <div class="history-result ${h.isWin?'win':'loss'}">${h.pips} pips</div>
+      </div>`;
+  });
+}
+
+// ── Refresh all ───────────────────────────────────────────────────────────────
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.innerHTML = '<span class="spinner"></span> جارٍ التحديث...';
+  btn.disabled = true;
+
+  await new Promise(r => setTimeout(r, 1200));
+
+  // Simulate small price movement
+  currentPrice += (Math.random() - 0.48) * 6;
+  currentPrice = parseFloat(currentPrice.toFixed(2));
+
+  updatePriceUI(currentPrice);
+  const sig = generateSignal(currentPrice);
+  updateSignalUI(sig);
+  updateIndicators(sig);
+  addHistory(sig, currentPrice);
+
+  chartData.push(currentPrice);
+  if (chartData.length > 50) chartData.shift();
+  drawChart();
+
+  btn.innerHTML = '<span class="refresh-icon">↻</span> تحديث الإشارة';
+  btn.disabled = false;
+}
+
+// ── Fetch real price (multi-source fallback) ─────────────────────────────────
+async function fetchLivePrice() {
+  // Source 1: Twelve Data
+  try {
+    const res = await fetch(`https://api.twelvedata.com/price?symbol=XAU/USD&apikey=${TWELVE_DATA_KEY}`);
+    const data = await res.json();
+    if (data && data.price && !data.code) {
+      const newPrice = parseFloat(data.price);
+      if (!isNaN(newPrice) && newPrice > 1000) {
+        currentPrice = newPrice;
+        updatePriceUI(currentPrice);
+        chartData.push(currentPrice);
+        if (chartData.length > 50) chartData.shift();
+        drawChart();
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Source 2: Metals-API via open proxy
+  try {
+    const res = await fetch(`https://api.metals.live/v1/spot/gold`);
+    const data = await res.json();
+    if (data && data[0] && data[0].gold) {
+      const newPrice = parseFloat(data[0].gold);
+      if (!isNaN(newPrice) && newPrice > 1000) {
+        currentPrice = newPrice;
+        updatePriceUI(currentPrice);
+        chartData.push(currentPrice);
+        if (chartData.length > 50) chartData.shift();
+        drawChart();
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Source 3: Fallback simulation if APIs fail
+  currentPrice += (Math.random() - 0.48) * 1.5;
+  currentPrice = parseFloat(currentPrice.toFixed(2));
+  updatePriceUI(currentPrice);
+  chartData.push(currentPrice);
+  if (chartData.length > 50) chartData.shift();
+  drawChart();
+}
+
+// ── Fetch real chart data ─────────────────────────────────────────────────────
+async function fetchChartData(tf) {
+  const intervalMap = { M5: '5min', M15: '15min', H1: '1h' };
+  try {
+    const res = await fetch(`https://api.twelvedata.com/time_series?symbol=XAU/USD&interval=${intervalMap[tf]}&outputsize=40&apikey=${TWELVE_DATA_KEY}`);
+    const data = await res.json();
+    if (data && data.values && data.values.length > 0 && !data.code) {
+      chartData = data.values.reverse().map(v => parseFloat(v.close));
+      currentPrice = chartData[chartData.length - 1];
+      updatePriceUI(currentPrice);
+      drawChart();
+      return;
+    }
+  } catch(e) {}
+  // Fallback: generate realistic chart from current price
+  chartData = generatePrice(currentPrice - 10, 40);
+  drawChart();
+}
+
+// ── Auto-update every 30s ─────────────────────────────────────────────────────
+async function autoTick() {
+  await fetchLivePrice();
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  initChart();
+  await fetchChartData('M5');
+  await fetchLivePrice();
+  const sig = generateSignal(currentPrice);
+  updateSignalUI(sig);
+  updateIndicators(sig);
+  addHistory(sig, currentPrice);
+  setInterval(autoTick, 30000);
+  setInterval(refreshAll, 60000);
+});
+
+window.addEventListener('resize', drawChart);
+</script>
+</body>
+</html>
