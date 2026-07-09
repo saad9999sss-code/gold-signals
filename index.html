@@ -70,6 +70,7 @@
   <div class="legend-item"><div class="legend-dot" style="background:#29b6f6;border-radius:50%"></div> قاع</div>
   <div class="legend-item"><div class="legend-dot" style="background:#00e676;border-radius:50%"></div> BUY ↑</div>
   <div class="legend-item"><div class="legend-dot" style="background:#ff5252;border-radius:50%"></div> SELL ↓</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00b0ff"></div> Hull Suite</div>
 </div>
 
 <div class="stats-row">
@@ -207,6 +208,32 @@ function detectSignals(candles, swings) {
   return result;
 }
 
+// ── HULL SUITE (Hull Moving Average trend line, visual only) ──
+const HULL_PERIOD = 20;
+
+function wma(arr, period) {
+  const result = new Array(arr.length).fill(null);
+  const denom = period * (period + 1) / 2;
+  for (let i = period - 1; i < arr.length; i++) {
+    let sum = 0;
+    for (let j = 0; j < period; j++) sum += arr[i - j] * (period - j);
+    result[i] = sum / denom;
+  }
+  return result;
+}
+
+function computeHullSuite(candlesArr, period = HULL_PERIOD) {
+  const closes = candlesArr.map(c => c.close);
+  const halfPeriod = Math.max(1, Math.round(period / 2));
+  const sqrtPeriod  = Math.max(1, Math.round(Math.sqrt(period)));
+  const wmaHalf = wma(closes, halfPeriod);
+  const wmaFull = wma(closes, period);
+  const diff = closes.map((_, i) => (wmaHalf[i] != null && wmaFull[i] != null) ? (2 * wmaHalf[i] - wmaFull[i]) : null);
+  const diffForWma = diff.map(d => d === null ? 0 : d);
+  const hullRaw = wma(diffForWma, sqrtPeriod);
+  return hullRaw.map((v, i) => (diff[i] === null ? null : v));
+}
+
 // ── CANVAS DRAW ──
 const canvas = document.getElementById('chartCanvas');
 const ctx = canvas.getContext('2d');
@@ -318,6 +345,20 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.fillText(isBuy ? 'BUY' : 'SELL', x, isBuy ? y + 20 : y - 14);
   });
+
+  // Hull Suite trend line (visual only — color reflects trend direction)
+  const hull = computeHullSuite(candles, HULL_PERIOD);
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  for (let i = 1; i < hull.length; i++) {
+    if (hull[i] == null || hull[i - 1] == null) continue;
+    const rising = hull[i] >= hull[i - 1];
+    ctx.strokeStyle = rising ? '#00e676' : '#ff5252';
+    ctx.beginPath();
+    ctx.moveTo(toX(i - 1), toY(hull[i - 1]));
+    ctx.lineTo(toX(i), toY(hull[i]));
+    ctx.stroke();
+  }
 
   // Last price line
   const lastPrice = candles[candles.length - 1].close;
