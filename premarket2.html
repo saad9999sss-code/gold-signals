@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سهم قبل الافتتاح</title>
+<style>
+:root{--bg:#14120e;--card:#1e1b15;--line:#3a3426;--tx:#f1ead8;--mu:#a39a83;--gold:#d9a93a;--up:#4ec28a;--dn:#e5624f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Tahoma,system-ui,sans-serif;line-height:1.6;padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 24px)}
+main{max-width:640px;margin:0 auto}
+h1{font-size:26px;margin:22px 0 4px;color:var(--gold)}
+p.sub{margin:0 0 10px;color:var(--mu);font-size:14px}
+#ph{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;margin-bottom:6px}
+#ph.on{border-color:var(--up);color:var(--up)}
+label{display:block;font-size:13px;color:var(--mu);margin:12px 0 4px}
+input,textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--tx);padding:10px;font-size:15px;font-family:inherit;direction:ltr;text-align:left}
+textarea{min-height:70px}
+button{margin-top:14px;width:100%;background:var(--gold);color:#14120e;border:0;border-radius:8px;padding:13px;font-size:17px;font-weight:700;font-family:inherit}
+button:disabled{opacity:.5}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#st{margin:14px 0;color:var(--mu);font-size:14px;min-height:20px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sym{font-size:24px;font-weight:700;direction:ltr}
+.gap{font-size:22px;font-weight:700;direction:ltr}
+.up{color:var(--up)}
+.meta{color:var(--mu);font-size:13px;direction:ltr;text-align:right}
+.sc{display:inline-block;margin:8px 0;padding:2px 10px;border:1px solid var(--gold);border-radius:99px;color:var(--gold);font-size:13px}
+.sc.weak{border-color:var(--line);color:var(--mu)}
+.n{display:block;text-decoration:none;color:var(--tx);padding:9px 0;border-top:1px solid var(--line)}
+.n .ar{display:block;font-size:15px}
+.n .en{display:block;font-size:12px;color:var(--mu);direction:ltr;text-align:left;margin-top:2px}
+.n.good .ar{color:var(--up)}
+.n.bad .ar{color:var(--dn)}
+.w{color:var(--mu);font-size:12px;margin-top:18px}
+</style>
+</head>
+<body>
+<main>
+<h1>سهم قبل الافتتاح</h1>
+<p class="sub">أسهم أمريكية ارتفعت عن إغلاق أمس ومعها أخبار إيجابية عن الشركة نفسها، مرتبة من الأقوى.</p>
+<div id="ph"></div>
+
+<label for="k">مفتاح Finnhub المجاني</label>
+<input id="k" type="password" autocomplete="off" placeholder="الصق المفتاح هنا">
+
+<label for="u">الأسهم المراقبة (افصل بينها بفاصلة)</label>
+<textarea id="u"></textarea>
+
+<button id="go">ابحث الآن</button>
+<div id="st"></div>
+<div id="out"></div>
+<p class="w">للمراقبة فقط وليست توصية. السيولة قبل الافتتاح قليلة والسبريد واسع، والخبر قد يكون منعكساً في السعر. الترجمة آلية وقد تخطئ، فارجع للعنوان الإنجليزي تحتها. المفتاح يُحفظ في جوالك فقط.</p>
+</main>
+<script>
+const DEF="NVDA,TSLA,AAPL,AMD,META,AMZN,MSFT,GOOGL,NFLX,PLTR,SMCI,COIN,MSTR,HOOD,SOFI,RIVN,NIO,MARA,RIOT,AFRM,UPST,SNOW,CRWD,SHOP,UBER,ABNB,DKNG,RBLX,ROKU,PYPL,INTC,MU,AVGO,ARM,SOUN,IONQ,RKLB,ASTS,LCID,F";
+const NM={NVDA:["nvidia"],TSLA:["tesla"],AAPL:["apple"],AMD:["advanced micro"],META:["meta platforms","facebook","instagram","zuckerberg"],AMZN:["amazon","aws"],MSFT:["microsoft"],GOOGL:["google","alphabet"],NFLX:["netflix"],PLTR:["palantir"],SMCI:["super micro"],COIN:["coinbase"],MSTR:["microstrategy"],HOOD:["robinhood"],SOFI:["sofi"],RIVN:["rivian"],NIO:["nio inc"],MARA:["marathon digital","mara holdings"],RIOT:["riot platforms"],AFRM:["affirm"],UPST:["upstart"],SNOW:["snowflake"],CRWD:["crowdstrike"],SHOP:["shopify"],UBER:["uber"],ABNB:["airbnb"],DKNG:["draftkings"],RBLX:["roblox"],ROKU:["roku"],PYPL:["paypal"],INTC:["intel"],MU:["micron"],AVGO:["broadcom"],ARM:["arm holdings"],SOUN:["soundhound"],IONQ:["ionq"],RKLB:["rocket lab"],ASTS:["ast spacemobile"],LCID:["lucid"],F:["ford motor"]};
+const POS=["beats","beat","tops","surges","surge","soars","soar","soared","surged","jumps","jumped","record","upgrade","upgraded","raises","raised","approval","approved","approves","acquire","acquires","acquisition","partnership","contract","wins","breakthrough","outperform","buyback","exceeds","launches","rallies","climbs","gains","fda approval"];
+const NEG=["miss","misses","missed","falls","fell","plunge","plunges","sinks","drops","dropped","slides","tumbles","downgrade","downgraded","cuts","lawsuit","probe","investigation","recall","bankruptcy","offering","dilution","layoff","layoffs","warning","delay","delays","rejects","fraud","walk away","walks away","slump","crash","loses"];
+const GEN=["magnificent seven","stocks to buy","best stocks","should you buy","what you should know","here is what","top stocks","stocks to watch","vs.","better buy"];
+const $=id=>document.getElementById(id);
+const K="pm_key",U="pm_list";
+try{$("k").value=localStorage.getItem(K)||"";}catch(e){}
+try{$("u").value=localStorage.getItem(U)||DEF;}catch(e){$("u").value=DEF;}
+const B="https://finnhub.io/api/v1";
+const day=d=>d.toISOString().slice(0,10);
+
+function phase(){
+  const p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"numeric",hour12:false}).formatToParts(new Date());
+  const g=t=>p.find(x=>x.type===t).value;
+  const wd=g("weekday"),h=+g("hour")%24,m=+g("minute"),t=h*60+m;
+  const hhmm=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+  let s,on=false;
+  if(wd==="Sat"||wd==="Sun")s="السوق مغلق (عطلة نهاية الأسبوع)";
+  else if(t>=240&&t<570){s="البري ماركت شغال الآن";on=true;}
+  else if(t>=570&&t<960)s="السوق مفتوح";
+  else if(t>=960&&t<1200)s="تداول بعد الإغلاق";
+  else s="السوق مغلق. البري ماركت يبدأ 4:00 صباحاً بتوقيت نيويورك (12:00 ظهراً بتوقيتك)";
+  $("ph").textContent="نيويورك الآن "+hhmm+": "+s;
+  $("ph").className=on?"on":"";
+}
+phase();
+
+async function api(p,key){
+  const r=await fetch(B+p+(p.includes("?")?"&":"?")+"token="+encodeURIComponent(key));
+  if(r.status===401||r.status===403)throw new Error("المفتاح غير صحيح");
+  if(r.status===429)throw new Error("تجاوزت حد الطلبات، انتظر دقيقة وحاول");
+  if(!r.ok)throw new Error("تعذر جلب البيانات");
+  return r.json();
+}
+function relevant(h,s){
+  const t=h.toLowerCase();
+  if(GEN.some(w=>t.includes(w)))return false;
+  if((NM[s]||[]).some(w=>t.includes(w)))return true;
+  if(!NM[s]&&new RegExp("\\b"+s+"\\b").test(h))return true;
+  if(NM[s]&&s.length>=3&&new RegExp("\\b"+s+"\\b").test(h))return true;
+  return false;
+}
+function rate(h){
+  const t=h.toLowerCase();let s=0;
+  const has=w=>new RegExp("\\b"+w+"\\b").test(t);
+  POS.forEach(w=>{if(has(w))s++});
+  NEG.forEach(w=>{if(has(w))s-=2});
+  return s;
+}
+async function tr(txt){
+  try{
+    const r=await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q="+encodeURIComponent(txt));
+    const j=await r.json();const o=j[0].map(x=>x[0]).join("");
+    if(o)return o;
+  }catch(e){}
+  try{
+    const r=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair=en|ar");
+    const j=await r.json();const o=j.responseData&&j.responseData.translatedText;
+    if(o&&!/MYMEMORY/i.test(o))return o;
+  }catch(e){}
+  return "";
+}
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+$("go").onclick=async()=>{
+  phase();
+  const key=$("k").value.trim();
+  const list=[...new Set($("u").value.toUpperCase().split(/[\s,،]+/).filter(Boolean))].slice(0,45);
+  if(!key){$("st").textContent="الصق مفتاح Finnhub أولاً (finnhub.io ثم Register).";return;}
+  try{localStorage.setItem(K,key);localStorage.setItem(U,$("u").value);}catch(e){}
+  const btn=$("go");btn.disabled=true;$("out").innerHTML="";
+  try{
+    $("st").textContent="جلب الأسعار...";
+    const q=[];
+    for(const s of list){
+      try{const d=await api("/quote?symbol="+s,key);
+        if(d&&d.pc>0&&d.c>0)q.push({s,c:d.c,pc:d.pc,g:(d.c-d.pc)/d.pc*100});
+      }catch(e){if(/المفتاح|حد/.test(e.message))throw e;}
+    }
+    const cand=q.filter(x=>x.g>0.5).sort((a,b)=>b.g-a.g).slice(0,12);
+    if(!cand.length){$("st").textContent="ما فيه أسهم مرتفعة في القائمة الحين.";return;}
+    $("st").textContent="جلب الأخبار...";
+    const to=new Date(),from=new Date(Date.now()-864e5);
+    for(const x of cand){
+      let n=[];
+      try{n=await api("/company-news?symbol="+x.s+"&from="+day(from)+"&to="+day(to),key);}catch(e){if(/المفتاح|حد/.test(e.message))throw e;}
+      x.news=n.filter(i=>i.datetime*1000>Date.now()-864e5&&relevant(i.headline,x.s)).slice(0,10)
+        .map(i=>({h:i.headline,u:i.url,r:rate(i.headline)}));
+      const kw=x.news.reduce((a,i)=>a+Math.max(Math.min(i.r,3),-4),0);
+      x.kw=kw;
+      x.score=Math.max(0,Math.min(100,Math.round(kw*18+Math.min(x.g,10)*4)));
+    }
+    let res=cand.filter(x=>x.kw>0&&x.news.some(i=>i.r>0)).sort((a,b)=>b.score-a.score).slice(0,5);
+    let weak=false;
+    if(!res.length){res=cand.slice(0,5);res.forEach(x=>{x.weak=true;});weak=true;}
+    res.forEach(x=>{x.show=x.news.filter(i=>i.r>0).concat(x.news.filter(i=>i.r<0),x.news.filter(i=>i.r===0)).slice(0,3);});
+    $("st").textContent="ترجمة العناوين...";
+    const all=res.flatMap(x=>x.show);
+    const ar=await Promise.all(all.map(i=>tr(i.h)));
+    all.forEach((i,k)=>{i.a=ar[k]||"";});
+    $("st").textContent=(weak?"ما فيه سهم بخبر إيجابي قوي الحين، هذي أعلى "+res.length+" أسهم ارتفاعاً من "+q.length+" تم فحصها":"أقوى "+res.length+" من "+q.length+" سهم تم فحصه")+(ar.some(Boolean)?"":" (تعذرت الترجمة الآن، العناوين بالإنجليزي)");
+    $("out").innerHTML=res.map(x=>
+      '<div class="c"><div class="top"><span class="sym">'+x.s+'</span><span class="gap up">+'+x.g.toFixed(2)+'%</span></div>'+
+      '<div class="meta">$'+x.c.toFixed(2)+' / '+x.pc.toFixed(2)+'</div>'+
+      (x.weak?'<span class="sc weak">بدون خبر قوي</span>':'<span class="sc">قوة الخبر '+x.score+'/100</span>')+(x.show.length?'':'<div class="meta" style="text-align:right">ما فيه خبر مرتبط بالشركة آخر 24 ساعة</div>')+
+      x.show.map(i=>'<a class="n '+(i.r>0?'good':i.r<0?'bad':'')+'" href="'+encodeURI(i.u)+'" target="_blank" rel="noopener"><span class="ar">'+esc(i.a||i.h)+'</span>'+(i.a?'<span class="en">'+esc(i.h)+'</span>':'')+'</a>').join("")+
+      '</div>').join("");
+  }catch(e){$("st").textContent=e.message;}
+  finally{btn.disabled=false;}
+};
+</script>
+</body>
+</html>
